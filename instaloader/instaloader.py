@@ -31,10 +31,10 @@ class Instance:
   image_file=""
   video_file=""
   caption_file=""
-  likes=""
+  likes=0
   timestamp=""
 
-  def clear():
+  def clear(self):
      image_file=""
      video_file=""
      comment_file=""
@@ -131,6 +131,9 @@ def print_html():
        filestr = ' <img src="' + '../' + instance.image_file + '" width="320" height="320">\n'
        profile_file.write(filestr)
        profile_file.write("   </a>\n")
+
+    like_str = '<div>Likes: ' + str(instance.likes) + '</div>\n'
+    profile_file.write(like_str)
 
     if instance.comment_file:
        date_str =  instance.timestamp 
@@ -361,24 +364,6 @@ class Instaloader:
         instance.image_file = filename 
         instance.timestamp = mtime
         #TJB here is the picture
-
-        #global global_profile
-        #profile_filename = global_profile + "/" + global_profile + "_index.html"
-        #print("palcing pic\n")
-        #profile_file = open( profile_filename, "a")
-        #profile_file.write("<div class=""gallery"">\n")
-        #filestr = '<a target="_blank" href=\"' + '../' + filename + '">\n'
-        #profile_file.write(filestr)
-        #filestr = ' <img src="' + '../' + filename + '" width="320" height="320">\n'
-        #profile_file.write(filestr)
-        #profile_file.write("   </a>\n")
-#
-#        date_str =  (mtime.timestamp()) 
-#        comment_str = '<div class="desc"><a href="' +global_profile+ '/'+ "comment_str" +  '.html' + '">' + str(date_str) + ':Caption</a></div>\n'
-#        #profile_file.write(comment_str)
-#        #profile_file.write("</div>\n")
-#
-
 
 
         # A post is considered "commited" if the json file exists and is not malformed.
@@ -639,6 +624,9 @@ class Instaloader:
         dirname = _PostPathFormatter(post).format(self.dirname_pattern, target=target)
         filename = dirname + '/' + self.format_filename(post, target=target)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+        instance.clear()
+        instance.likes = len(list(post.get_likes()));
 
         # Download the image(s) / video thumbnail and videos within sidecars if desired
         downloaded = True
@@ -1318,6 +1306,7 @@ class Instaloader:
         count = 1
         for post in profile.get_posts():
             instance.clear()
+            instance.likes = post.get_likes();
             self.context.log("[%3i/%3i] " % (count, totalcount), end="", flush=True)
             count += 1
             if post_filter is not None and not post_filter(post):
