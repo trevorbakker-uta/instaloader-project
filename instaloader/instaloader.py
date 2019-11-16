@@ -26,6 +26,7 @@ video_history=None
 class Instance:
   verified=""
   username=""
+  biography=""
   comment_file=""
   image_file=""
   video_file=""
@@ -94,7 +95,7 @@ def print_html_header():
     userstr = "@" + profile_name
     profile_file.write(userstr)
     profile_file.write("</h1>\n")
-    profile_file.write("<h3>Bio:\n")
+    profile_file.write("<h3>Biography: </h3> " + instance.biography + "\n")
     profile_file.write("</h3>\n")
     profile_file.write("<h3>Verified:</h3>" + str(instance.is_verified) + " <br>\n")
     profile_file.write("<h3>Posts:</h3> <br>\n")
@@ -1171,6 +1172,7 @@ class Instaloader:
         for profile in profiles:
             with error_handler(profile.username):  # type: ignore
                 instance.username = profile.username
+                instance.biography = profile.biography
                 instance.is_verified = profile.is_verified
                 profile_name      = profile.username
                 print_html_header() 
