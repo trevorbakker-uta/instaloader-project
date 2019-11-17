@@ -678,8 +678,6 @@ class Instaloader:
         if self.save_metadata is not False:
             self.save_metadata_json(filename, post)
 
-        print_html()
-
         self.context.log()
         return downloaded
 
