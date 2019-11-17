@@ -32,6 +32,7 @@ class Instance:
   video_file=""
   caption_file=""
   likes=0
+  post_count=0
   timestamp=""
 
   def clear(self):
@@ -98,7 +99,7 @@ def print_html_header():
     profile_file.write("<h3>Biography: </h3> " + instance.biography + "\n")
     profile_file.write("</h3>\n")
     profile_file.write("<h3>Verified:</h3>" + str(instance.is_verified) + " <br>\n")
-    profile_file.write("<h3>Posts:</h3> <br>\n")
+    profile_file.write("<h3>Posts:</h3> "   + str(instance.post_count) + "<br>\n")
     profile_file.write("<h3>Followers:</h3> <br>\n")
     profile_file.write("<h3>Following:</h3> <br>\n")
     #profile_file.write("<h3>Followers:</h3>"+ str(len(list(profile.get_followers()))) +" <br>\n")
@@ -643,12 +644,15 @@ class Instaloader:
                     if sidecar_node.is_video and self.download_videos is True:
                         downloaded &= self.download_pic(filename=filename, url=sidecar_node.video_url,
                                                         mtime=post.date_local, filename_suffix=str(edge_number))
+                    print_html()
                     edge_number += 1
             elif post.typename == 'GraphImage':
                 downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
+                print_html()
             elif post.typename == 'GraphVideo':
                 if self.download_video_thumbnails is True:
                     downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
+                    print_html()
             else:
                 self.context.error("Warning: {0} has unknown typename: {1}".format(post, post.typename))
 
@@ -1163,7 +1167,6 @@ class Instaloader:
                 instance.biography = profile.biography
                 instance.is_verified = profile.is_verified
                 profile_name      = profile.username
-                print_html_header() 
 
                 # Download profile picture
                 if profile_pic:
@@ -1197,9 +1200,18 @@ class Instaloader:
                 # Iterate over pictures and download them
                 if posts:
                     self.context.log("Retrieving posts from profile {}.".format(profile_name))
+
+
                     totalcount = profile.mediacount
                     count = 1
+                    instance.post_count = len(list(profile.get_posts()))
+                    header = 1
                     for post in profile.get_posts():
+                        instance.clear()
+                        instance.likes = len(list(post.get_likes()));
+                        if header == 1:
+                           print_html_header()
+                           header = 0
                         self.context.log("[%3i/%3i] " % (count, totalcount), end="", flush=True)
                         count += 1
                         if post_filter is not None and not post_filter(post):
@@ -1302,11 +1314,18 @@ class Instaloader:
 
         # Iterate over pictures and download them
         self.context.log("Retrieving posts from profile {}.".format(profile_name))
+
+
         totalcount = profile.mediacount
         count = 1
+        header = 1
         for post in profile.get_posts():
             instance.clear()
-            instance.likes = post.get_likes();
+            instance.likes = len(list(post.get_likes()));
+            print("DKJSLJDSAKLJDKLSA")
+            if header == 1:
+               print_html_header()
+               header = 0
             self.context.log("[%3i/%3i] " % (count, totalcount), end="", flush=True)
             count += 1
             if post_filter is not None and not post_filter(post):
