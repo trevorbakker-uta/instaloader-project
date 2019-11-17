@@ -19,6 +19,15 @@ from typing import Any, Callable, Iterator, List, Optional, Set, Union
 
 global_profile =""
 
+temptime = None
+
+class PostStats:
+    post_count  = 0
+    image_count = 0
+    video_count = 0
+
+
+stats ={}
 post_history=None
 image_history=None
 video_history=None
@@ -35,6 +44,8 @@ class Instance:
   multipic=0
   post_count=0
   timestamp=""
+  followers=0
+  followees=0
 
   def clear(self):
      image_file=""
@@ -44,6 +55,8 @@ class Instance:
      likes=""
      multipic=0
      timestamp=""
+     followers=0
+     followees=0
 
 instance = Instance()    
 
@@ -62,14 +75,6 @@ def print_html_header():
     profile_filename = profile_name + "/" + profile_name + "_index.html"
     profile_file = open( profile_filename, "w+")
 
-    global post_history
-    global image_history
-    global video_history
-
-    post_history  = open( profile_name + "/" + profile_name + "_post_history.csv", "w+" )
-    image_history = open( profile_name + "/" + profile_name + "_image_history.csv", "w+" )
-    video_history = open( profile_name + "/" + profile_name + "_video_history.csv", "w+" )
-    
     profile_file.write("<!DOCTYPE html>\n")
     profile_file.write("<html>\n")
     profile_file.write("<head>\n")
@@ -102,24 +107,123 @@ def print_html_header():
     profile_file.write("</h3>\n")
     profile_file.write("<h3>Verified:</h3>" + str(instance.is_verified) + " <br>\n")
     profile_file.write("<h3>Posts:</h3> "   + str(instance.post_count) + "<br>\n")
-    profile_file.write("<h3>Followers:</h3> <br>\n")
-    profile_file.write("<h3>Following:</h3> <br>\n")
-    #profile_file.write("<h3>Followers:</h3>"+ str(len(list(profile.get_followers()))) +" <br>\n")
-    #profile_file.write("<h3>Following:</h3>"+ str(len(list(profile.get_followees()))) +"  <br>\n")
+    profile_file.write("<h3>Followers:</h3>"+ str(instance.followers) +" <br>\n")
+    profile_file.write("<h3>Following:</h3>"+ str(instance.followees) +"  <br>\n")
     profile_file.write("</h3>\n")
     
     
     profile_file.write("<h2>\n")
-    
-    # put the start and end times here
-    # timestr = s_start + " - " + s_end;
-    # profile_file.write(timestr)
-    profile_file.write("</h2>\n")
     profile_file.write('<a href="' + profile_name + '_post_history.csv'+ '">Post History CSV File</a><br>')
     profile_file.write('<a href="' + profile_name + '_image_history.csv'+ '">Image History CSV File</a><br>')
     profile_file.write('<a href="' + profile_name + '_video_history.csv'+ '">Video History CSV File</a>')
     profile_file.write("</div><br>\n")
     profile_file.close()
+
+def print_html_tail():
+
+    global post_history
+    global image_history
+    global video_history
+
+    print("Pringint the til")
+    post_history  = open( instance.username + "/" + instance.username + "_post_history.csv", "w+" )
+    image_history = open( instance.username + "/" + instance.username + "_image_history.csv", "w+" )
+    video_history = open( instance.username + "/" + instance.username + "_video_history.csv", "w+" )
+    
+    
+    # put the start and end times here
+    # timestr = s_start + " - " + s_end;
+    # profile_file.write(timestr)
+    #profile_file.write("</h2>\n")
+
+    # september 3rd is the 246th day
+    for day in range(3, 247):
+       post_history.write(',')
+       image_history.write(',')
+       video_history.write(',')
+ 
+       daystr = datetime.fromordinal(day)
+       daystr = daystr.replace( year=2019 )
+ 
+       post_history.write(daystr.strftime('%Y-%m-%d'))
+       image_history.write(daystr.strftime('%Y-%m-%d'))
+       video_history.write(daystr.strftime('%Y-%m-%d'))
+ 
+    post_history.write('\n')
+    image_history.write('\n')
+    video_history.write('\n')
+ 
+    post_history.write(instance.username)
+    image_history.write(instance.username)
+    video_history.write(instance.username)
+
+    for day in range(3, 276):
+       post_history.write(',')
+       daystr = datetime.fromordinal(day)
+       daystr = daystr.replace( year=2019 )
+       keystr = daystr.strftime('%Y-%m-%d')
+       value = stats.get(keystr)
+       if not value:
+          post_history.write('0')
+       else:
+          post_history.write( str( stats[keystr].post_count ) )
+
+    for day in range(3, 276):
+       image_history.write(',')
+       daystr = datetime.fromordinal(day)
+       daystr = daystr.replace( year=2019 )
+       keystr = daystr.strftime('%Y-%m-%d')
+       print( keystr )
+       value = stats.get(keystr)
+       if not value:
+          image_history.write('0')
+       else:
+          image_history.write( str( stats[keystr].image_count ) )
+
+    for day in range(3, 276):
+       video_history.write(',')
+       daystr = datetime.fromordinal(day)
+       daystr = daystr.replace( year=2019 )
+       keystr = daystr.strftime('%Y-%m-%d')
+       value = stats.get(keystr)
+       if not value:
+          video_history.write('0')
+       else:
+          video_history.write( str( stats[keystr].video_count ) )
+
+    profile_name = instance.username
+
+    profile_filename = profile_name + "/" + profile_name + "_index.html"
+    profile_file = open( profile_filename, "a")
+    profile_file.write("<!DOCTYPE html><html><head><style>table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}tr:nth-child(even) {background-color: #dddddd;}</style></head><body>")
+    profile_file.write("<table>")
+    profile_file.write("<tr>")
+    profile_file.write("<th>Date</th>")
+    profile_file.write("<th>Post Count</th>")
+    profile_file.write("<th>Image Count</th>")
+    profile_file.write("<th>Video Count</th>")
+    profile_file.write("</tr>")
+
+
+
+    for key, value in stats.items():
+      post_datetime = key
+      #post_datetime = key.strftime('%Y-%m-%d')
+      profile_file.write("<tr>")
+      tablestr = '<td>' + post_datetime + '</td>'
+      profile_file.write(tablestr)
+      tablestr = '<td>' + str(value.post_count) + '</td>'
+      profile_file.write(tablestr)
+      tablestr = '<td>' + str(value.image_count) + '</td>'
+      profile_file.write(tablestr)
+      tablestr = '<td>' + str(value.video_count) + '</td>'
+      profile_file.write(tablestr)
+      profile_file.write("</tr>")
+
+    post_history.close()
+    image_history.close()
+    video_history.close()
+
 
 def print_html():
 
@@ -162,9 +266,6 @@ def print_html():
     global image_history
     global video_history
 
-    post_history.close()
-    image_history.close()
-    video_history.close()
 
 
 
@@ -373,6 +474,15 @@ class Instaloader:
 
         instance.image_file = filename 
         instance.timestamp = mtime
+
+        # Start stat collection
+        post_datetime = mtime.strftime('%Y-%m-%d')
+        if post_datetime not in stats:
+           print(post_datetime)
+           stats[post_datetime] = PostStats()
+
+        stats[post_datetime].post_count = stats[post_datetime].post_count + 1
+        print( post_datetime + " is now " + str( stats[post_datetime].post_count ) )
         #TJB here is the picture
 
 
@@ -458,7 +568,7 @@ class Instaloader:
 
             for c in comments:
                time_str = datetime.utcfromtimestamp(c['created_at']).strftime('%Y-%m-%d %H:%M:%S')
-               comment_file.write( time_str + " ,  " + c['owner']['username'] + " , " + c['text'] + "\n" )
+               comment_file.write( time_str + " ,  " + c['owner']['username'] + " , " + c['text'] + "<br>" )
 
             comment_file.close()
 
@@ -643,9 +753,19 @@ class Instaloader:
         instance.clear()
         instance.likes = len(list(post.get_likes()));
 
+        # Save caption if desired
+        metadata_string = _ArbitraryItemFormatter(post).format(self.post_metadata_txt_pattern).strip()
+        if metadata_string:
+            self.save_caption(filename=filename, mtime=post.date_local, caption=metadata_string)
+
+        # Update comments if desired
+        if self.download_comments is True:
+            self.update_comments(filename=filename, post=post)
+ 
         # Download the image(s) / video thumbnail and videos within sidecars if desired
         downloaded = True
         self._committed = self.check_if_committed(filename)
+        mtime = instance.timestamp
         if self.download_pictures:
             if post.typename == 'GraphSidecar':
                 edge_number = 1
@@ -659,24 +779,37 @@ class Instaloader:
                         downloaded &= self.download_pic(filename=filename, url=sidecar_node.video_url,
                                                         mtime=post.date_local, filename_suffix=str(edge_number))
                     instance.multipic = 1
+                    post_datetime = instance.timestamp.strftime('%Y-%m-%d')
+                    if post_datetime not in stats:
+                       print(post_datetime)
+                       stats[post_datetime] = PostStats()
+
+                    stats[post_datetime].image_count = stats[post_datetime].image_count + 1
                     print_html()
                     edge_number += 1
             elif post.typename == 'GraphImage':
                 downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
                 instance.multipic = 1
+                post_datetime = instance.timestamp.strftime('%Y-%m-%d')
+                if post_datetime not in stats:
+                    print(post_datetime)
+                    stats[post_datetime] = PostStats()
+                stats[post_datetime].image_count = stats[post_datetime].image_count + 1
                 print_html()
             elif post.typename == 'GraphVideo':
                 if self.download_video_thumbnails is True:
                     downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
                     instance.multipic = 1
+                    post_datetime = instance.timestamp.strftime('%Y-%m-%d')
+                    if post_datetime not in stats:
+                        print(post_datetime)
+                        stats[post_datetime] = PostStats()
+    
+                    stats[post_datetime].video_count = stats[post_datetime].video_count + 1
                     print_html()
             else:
                 self.context.error("Warning: {0} has unknown typename: {1}".format(post, post.typename))
 
-        # Save caption if desired
-        metadata_string = _ArbitraryItemFormatter(post).format(self.post_metadata_txt_pattern).strip()
-        if metadata_string:
-            self.save_caption(filename=filename, mtime=post.date_local, caption=metadata_string)
 
 
         # Download video if desired
@@ -687,10 +820,6 @@ class Instaloader:
         if self.download_geotags and post.location:
             self.save_location(filename, post.location, post.date_local)
 
-        # Update comments if desired
-        if self.download_comments is True:
-            self.update_comments(filename=filename, post=post)
- 
         # Save metadata as JSON if desired.
         if self.save_metadata is not False:
             self.save_metadata_json(filename, post)
@@ -1182,6 +1311,9 @@ class Instaloader:
                 instance.biography = profile.biography
                 instance.is_verified = profile.is_verified
                 profile_name      = profile.username
+                #  query followers here
+                #instance.followers = len(list(profile.get_followers())) 
+                #instance.followees = len(list(profile.get_followees())) 
 
                 # Download profile picture
                 if profile_pic:
@@ -1251,6 +1383,7 @@ class Instaloader:
                             if fast_update and not downloaded and not post_changed:
                                 break
 
+        print_html_tail()
         if stories and profiles:
             with self.context.error_catcher("Download stories"):
                 self.context.log("Downloading stories")
@@ -1337,7 +1470,6 @@ class Instaloader:
         for post in profile.get_posts():
             instance.clear()
             instance.likes = len(list(post.get_likes()));
-            print("DKJSLJDSAKLJDKLSA")
             if header == 1:
                print_html_header()
                header = 0
@@ -1350,7 +1482,7 @@ class Instaloader:
                 downloaded = self.download_post(post, target=profile_name)
                 if fast_update and not downloaded:
                     break
-
+        print_html_tail()
 
     def check_if_committed(self, filename: str) -> bool:
         """Checks to see if the current post has been committed.
