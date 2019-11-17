@@ -46,6 +46,7 @@ class Instance:
   timestamp=""
   followers=0
   followees=0
+  is_video=0
 
   def clear(self):
      image_file=""
@@ -57,7 +58,8 @@ class Instance:
      timestamp=""
      followers=0
      followees=0
-
+     is_video=0
+ 
 instance = Instance()    
 
 import requests
@@ -125,7 +127,6 @@ def print_html_tail():
     global image_history
     global video_history
 
-    print("Pringint the til")
     post_history  = open( instance.username + "/" + instance.username + "_post_history.csv", "w+" )
     image_history = open( instance.username + "/" + instance.username + "_image_history.csv", "w+" )
     video_history = open( instance.username + "/" + instance.username + "_video_history.csv", "w+" )
@@ -232,12 +233,19 @@ def print_html():
     profile_file.write("<div class=""gallery"">\n")
 
     if instance.image_file:
-       filestr = '<a target="_blank" href=\"' + '../' + instance.image_file + '">\n'
-
-       profile_file.write(filestr)
-       filestr = ' <img src="' + '../' + instance.image_file + '" width="320" height="320">\n'
-       profile_file.write(filestr)
-       profile_file.write("   </a>\n")
+       print("Entry??\n")
+       if instance.is_video == 1:
+          videostr = '<video width="320" height="320" preload="none" controls>'
+          profile_file.write(videostr)
+          videostr = '<source src="../' + instance.image_file + '" type="video/mp4">'
+          profile_file.write(videostr)
+          profile_file.write('</video>')
+       else:
+          filestr = '<a target="_blank" href=\"' + '../' + instance.image_file + '">\n'
+          profile_file.write(filestr)
+          filestr = ' <img src="' + '../' + instance.image_file + '" width="320" height="320">\n'
+          profile_file.write(filestr)
+          profile_file.write("   </a>\n")
 
     posted_str = '<div>Posted: ' + str(instance.timestamp) + '</div>\n'
     profile_file.write(posted_str)
@@ -472,7 +480,14 @@ class Instaloader:
             filename += '_' + filename_suffix
         filename += '.' + file_extension
 
+        instance.is_video = 0
+
+        if file_extension == "mp4":
+           print("Found a video: " + filename)
+           instance.is_video = 1
+
         instance.image_file = filename 
+        print("Image file: " + instance.image_file )
         instance.timestamp = mtime
 
         # Start stat collection
@@ -483,7 +498,6 @@ class Instaloader:
 
         stats[post_datetime].post_count = stats[post_datetime].post_count + 1
         print( post_datetime + " is now " + str( stats[post_datetime].post_count ) )
-        #TJB here is the picture
 
 
         # A post is considered "commited" if the json file exists and is not malformed.
@@ -770,21 +784,23 @@ class Instaloader:
             if post.typename == 'GraphSidecar':
                 edge_number = 1
                 for sidecar_node in post.get_sidecar_nodes():
-                    # Download picture or video thumbnail
-                    if not sidecar_node.is_video or self.download_video_thumbnails is True:
-                        downloaded &= self.download_pic(filename=filename, url=sidecar_node.display_url,
-                                                        mtime=post.date_local, filename_suffix=str(edge_number))
-                    # Additionally download video if available and desired
-                    if sidecar_node.is_video and self.download_videos is True:
-                        downloaded &= self.download_pic(filename=filename, url=sidecar_node.video_url,
-                                                        mtime=post.date_local, filename_suffix=str(edge_number))
-                    instance.multipic = 1
                     post_datetime = instance.timestamp.strftime('%Y-%m-%d')
                     if post_datetime not in stats:
                        print(post_datetime)
                        stats[post_datetime] = PostStats()
 
-                    stats[post_datetime].image_count = stats[post_datetime].image_count + 1
+                    # Download picture or video thumbnail
+                    if not sidecar_node.is_video or self.download_video_thumbnails is True:
+                        downloaded &= self.download_pic(filename=filename, url=sidecar_node.display_url,
+                                                        mtime=post.date_local, filename_suffix=str(edge_number))
+                        stats[post_datetime].image_count = stats[post_datetime].image_count + 1
+                    # Additionally download video if available and desired
+                    if sidecar_node.is_video and self.download_videos is True:
+                        downloaded &= self.download_pic(filename=filename, url=sidecar_node.video_url,
+                                                        mtime=post.date_local, filename_suffix=str(edge_number))
+                        stats[post_datetime].image_count = stats[post_datetime].video_count + 1
+                    instance.multipic = 1
+
                     print_html()
                     edge_number += 1
             elif post.typename == 'GraphImage':
@@ -815,6 +831,12 @@ class Instaloader:
         # Download video if desired
         if post.is_video and self.download_videos is True:
             downloaded &= self.download_pic(filename=filename, url=post.video_url, mtime=post.date_local)
+            post_datetime = instance.timestamp.strftime('%Y-%m-%d')
+            if post_datetime not in stats:
+                print(post_datetime)
+                stats[post_datetime] = PostStats()
+            stats[post_datetime].video_count = stats[post_datetime].video_count + 1
+            print_html()
 
         # Download geotags if desired
         if self.download_geotags and post.location:
