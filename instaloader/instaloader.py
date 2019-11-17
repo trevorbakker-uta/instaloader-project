@@ -32,6 +32,7 @@ class Instance:
   video_file=""
   caption_file=""
   likes=0
+  multipic=0
   post_count=0
   timestamp=""
 
@@ -41,6 +42,7 @@ class Instance:
      comment_file=""
      caption_file=""
      likes=""
+     multipic=0
      timestamp=""
 
 instance = Instance()    
@@ -133,17 +135,24 @@ def print_html():
        profile_file.write(filestr)
        profile_file.write("   </a>\n")
 
+    posted_str = '<div>Posted: ' + str(instance.timestamp) + '</div>\n'
+    profile_file.write(posted_str)
+
     like_str = '<div>Likes: ' + str(instance.likes) + '</div>\n'
     profile_file.write(like_str)
 
-    if instance.comment_file:
-       date_str =  instance.timestamp 
-       comment_str = '<div><a href="' + "../" +global_profile+ '/'+ instance.comment_file + '">' + str(date_str) + ' Comments</a></div>\n'
-       profile_file.write(comment_str)
+    if instance.multipic:
+       multi_str = '<div>MultiPic post</div>\n'
+       profile_file.write(multi_str)
 
     if instance.caption_file:
        date_str = instance.timestamp 
-       comment_str = '<div class="desc"><a href="' + "../" +global_profile+ '/'+ instance.caption_file + '">' + str(date_str) + ' Caption</a></div>\n'
+       comment_str = '<div class="desc"><a href="' + "../" +global_profile+ '/'+ instance.caption_file + '"> Caption</a></div>\n'
+       profile_file.write(comment_str)
+
+    if instance.comment_file:
+       date_str =  instance.timestamp 
+       comment_str = '<div><a href="' + "../" +global_profile+ '/'+ instance.comment_file + '"> Comments</a></div>\n'
        profile_file.write(comment_str)
 
     profile_file.write("</div>")
@@ -427,6 +436,7 @@ class Instaloader:
         date_str =  filename 
         filename += '_comments.json'
 
+
         # write out comments here
         try:
             with open(filename) as fp:
@@ -440,6 +450,7 @@ class Instaloader:
             comments = get_unique_comments(comments, combine_answers=True)
 
             comment_file = open( comment_file_path, "w+")
+            comment_file.write( "<head> <meta charset='utf-8'> </head>\n")
 
             # TJB - Here we need to write out the comments into the comment file
 
@@ -466,6 +477,9 @@ class Instaloader:
             return '[' + ((pcaption[:29] + u"\u2026") if len(pcaption) > 31 else pcaption) + ']'
         filename += '.html'
         instance.caption_file = filename
+        fp = open( filename, "w" )
+        fp.write( "<head> <meta charset='utf-8'> </head>\n")
+        fp.close()
         caption += '\n'
         pcaption = _elliptify(caption)
         bcaption = caption.encode("UTF-8")
@@ -644,14 +658,17 @@ class Instaloader:
                     if sidecar_node.is_video and self.download_videos is True:
                         downloaded &= self.download_pic(filename=filename, url=sidecar_node.video_url,
                                                         mtime=post.date_local, filename_suffix=str(edge_number))
+                    instance.multipic = 1
                     print_html()
                     edge_number += 1
             elif post.typename == 'GraphImage':
                 downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
+                instance.multipic = 1
                 print_html()
             elif post.typename == 'GraphVideo':
                 if self.download_video_thumbnails is True:
                     downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
+                    instance.multipic = 1
                     print_html()
             else:
                 self.context.error("Warning: {0} has unknown typename: {1}".format(post, post.typename))
